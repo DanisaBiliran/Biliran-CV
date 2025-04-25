@@ -87,7 +87,74 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
     <button type="button" onclick="addAffiliation()">Add Affiliation</button>
     <input type="hidden" name="removed_affiliations" id="removed-affiliations">
 
-    <input type="submit" value="Save">
+    <!-- Experience Areas -->
+    <h2>Experience Areas</h2>
+    <div id="experience_areas">
+        <?php 
+        $experience_areas = $conn->query("SELECT * FROM experience_areas WHERE profile_id = 1")->fetch_all(MYSQLI_ASSOC);
+        foreach ($experience_areas as $exp): ?>
+            <div class="experience-entry" id="experience-<?= $exp['id'] ?>" data-id="<?= $exp['id'] ?>">
+                <label>Name:</label>
+                <input type="text" name="experience_areas[<?= $exp['id'] ?>][name]" 
+                    value="<?= htmlspecialchars($exp['name']) ?>">
+                <label>Percentage:</label>
+                <input type="number" name="experience_areas[<?= $exp['id'] ?>][percentage]" 
+                    value="<?= htmlspecialchars($exp['percentage']) ?>" min="0" max="100">
+                <button type="button" onclick="removeExperience(<?= $exp['id'] ?>)">Remove</button>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <button type="button" onclick="addExperience()">Add Experience Area</button>
+    <input type="hidden" name="removed_experience" id="removed-experience">
+
+    <!-- References -->
+    <h2>References</h2>
+    <div id="references">
+        <?php
+        $references = $conn->query("SELECT * FROM `reference` WHERE profile_id = 1")->fetch_all(MYSQLI_ASSOC);
+        foreach ($references as $ref): ?>
+            <div class="reference-entry" id="reference-<?= $ref['id'] ?>" data-id="<?= $ref['id'] ?>">
+            <label>Title: <?= htmlspecialchars($ref['title']) ?> &nbsp;&nbsp;
+            Edit Title:</label>
+                <select name="references[<?= $ref['id'] ?>][title]" onchange="toggleCustomTitle(this, this.nextElementSibling)">
+                    <option value="Mr." <?= ($ref['title'] == 'Mr.') ? 'selected' : '' ?>>Mr.</option>
+                    <option value="Ms." <?= ($ref['title'] == 'Ms.') ? 'selected' : '' ?>>Ms.</option>
+                    <option value="Mrs." <?= ($ref['title'] == 'Mrs.') ? 'selected' : '' ?>>Mrs.</option>
+                    <option value="Other" <?= ($ref['title'] == 'Other') ? 'selected' : '' ?>>Other</option>
+                </select>
+                <input type="text" name="references[<?= $ref['id'] ?>][custom_title]" 
+                       value="<?= ($ref['title'] != 'Mr.' && $ref['title'] != 'Ms.' && $ref['title'] != 'Mrs.' && $ref['title'] != 'Other') ? htmlspecialchars($ref['title']) : '' ?>"
+                       placeholder="Custom Title"
+                       style="<?= ($ref['title'] == 'Mr.' || $ref['title'] == 'Ms.' || $ref['title'] == 'Mrs.' || $ref['title'] == 'Other') ? 'display:none;' : '' ?>">
+                <br>
+
+                <label>First Name:</label>
+                <input type="text" name="references[<?= $ref['id'] ?>][first_name]" value="<?= htmlspecialchars($ref['first_name']) ?>"><br>
+                <label>Middle Name:</label>
+                <input type="text" name="references[<?= $ref['id'] ?>][middle_name]" value="<?= htmlspecialchars($ref['middle_name']) ?>"><br>
+                <label>Last Name:</label>
+                <input type="text" name="references[<?= $ref['id'] ?>][last_name]" value="<?= htmlspecialchars($ref['last_name']) ?>"><br>
+                <label>Position:</label>
+                <input type="text" name="references[<?= $ref['id'] ?>][position]" value="<?= htmlspecialchars($ref['position']) ?>"><br>
+                <label>Department:</label>
+                <input type="text" name="references[<?= $ref['id'] ?>][department]" value="<?= htmlspecialchars($ref['department']) ?>"><br>
+                <label>Institution:</label>
+                <input type="text" name="references[<?= $ref['id'] ?>][institution]" value="<?= htmlspecialchars($ref['institution']) ?>"><br>
+                <label>Mobile:</label>
+                <input type="text" name="references[<?= $ref['id'] ?>][mobile]" value="<?= htmlspecialchars($ref['mobile']) ?>"><br>
+                <label>Email:</label>
+                <input type="email" name="references[<?= $ref['id'] ?>][email]" value="<?= htmlspecialchars($ref['email']) ?>"><br>
+                <button type="button" onclick="removeReference(<?= $ref['id'] ?>)">Remove</button>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <button type="button" onclick="addReference()">Add Reference</button>
+    <input type="hidden" name="removed_references" id="removed-references">
+
+
+    <br><input type="submit" value="Save">
 </form>
 
 <script>
@@ -153,6 +220,104 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
             removed.value = JSON.stringify(removedIds);
         }
     }
+
+    // EXPERIENCE AREAS
+    let experienceIndex = <?= count($experience_areas) ?>;
+    let newExperienceCounter = 0;
+
+    function addExperience() {
+        const container = document.getElementById("experience_areas");
+        const entry = document.createElement("div");
+        const newId = 'new_' + newExperienceCounter++;
+        
+        entry.classList.add("experience-entry");
+        entry.setAttribute('data-id', newId);
+        entry.innerHTML = `
+            <label>Name:</label>
+            <input type="text" name="experience_areas[${newId}][name]">
+            <label>Percentage:</label>
+            <input type="number" name="experience_areas[${newId}][percentage]" min="0" max="100">
+            <button type="button" onclick="removeExperience('${newId}')">Remove</button>
+        `;
+        container.appendChild(entry);
+    }
+
+    function removeExperience(id) {
+        const entry = document.querySelector(`[data-id="${id}"]`);
+        if (entry) entry.remove();
+
+        if (typeof id === 'number' || !isNaN(id)) {
+            const removed = document.getElementById('removed-experience');
+            let removedIds = JSON.parse(removed.value || '[]');
+            removedIds.push(parseInt(id));
+            removed.value = JSON.stringify(removedIds);
+        }
+    }
+
+    // REFERENCES
+    let referenceIndex = <?= count($references) ?>;
+    let newReferenceCounter = 0;
+
+    function addReference() {
+        const container = document.getElementById("references");
+        const newId = 'new_' + newReferenceCounter++;
+        const entry = document.createElement("div");
+        entry.classList.add("reference-entry");
+        entry.setAttribute('data-id', newId);
+        entry.innerHTML = `
+            <label>Title:</label>
+            <select name="references[${newId}][title]" onchange="toggleCustomTitle(this, this.nextElementSibling)">
+                <option value="Mr.">Mr.</option>
+                <option value="Ms.">Ms.</option>
+                <option value="Mrs.">Mrs.</option>
+                <option value="Other">Other</option>
+            </select>
+            <input type="text" name="references[${newId}][custom_title]" placeholder="Custom Title" style="display:none;"><br>
+
+            <label>First Name:</label>
+            <input type="text" name="references[${newId}][first_name]"><br>
+            <label>Middle Name:</label>
+            <input type="text" name="references[${newId}][middle_name]"><br>
+            <label>Last Name:</label>
+            <input type="text" name="references[${newId}][last_name]"><br>
+            <label>Position:</label>
+            <input type="text" name="references[${newId}][position]"><br>
+            <label>Department:</label>
+            <input type="text" name="references[${newId}][department]"><br>
+            <label>Institution:</label>
+            <input type="text" name="references[${newId}][institution]"><br>
+            <label>Mobile:</label>
+            <input type="text" name="references[${newId}][mobile]"><br>
+            <label>Email:</label>
+            <input type="email" name="references[${newId}][email]"><br>
+            <button type="button" onclick="removeReference('${newId}')">Remove</button>
+        `;
+        container.appendChild(entry);
+    }
+
+    function removeReference(id) {
+        const entry = document.querySelector(`[data-id="${id}"]`);
+        if (entry) entry.remove();
+
+        if (typeof id === 'number' || !isNaN(id)) {
+            const removed = document.getElementById('removed-references');
+            let removedIds = JSON.parse(removed.value || '[]');
+            removedIds.push(parseInt(id));
+            removed.value = JSON.stringify(removedIds);
+        }
+    }
+
+    // reference title 
+    function toggleCustomTitle(selectElement, customTitleInput) {
+        customTitleInput.style.display = (selectElement.value === 'Other') ? 'inline' : 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('select[name$="[title]"]').forEach(function(selectElement) {
+            toggleCustomTitle(selectElement, selectElement.nextElementSibling);
+        });
+    });
+
 
 </script>
 

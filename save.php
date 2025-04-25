@@ -113,6 +113,91 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
+    // ==================================
+    // EXPERIENCE AREAS
+    // add and update
+    // Handle experience areas
+    if (isset($_POST['experience_areas'])) {
+        foreach ($_POST['experience_areas'] as $key => $exp) {
+            $name = $conn->real_escape_string($exp['name']);
+            $percentage = $conn->real_escape_string($exp['percentage']);
+
+            if (is_numeric($key)) {
+                // Update existing entry
+                $conn->query("UPDATE experience_areas SET 
+                    name='$name', 
+                    percentage='$percentage' 
+                    WHERE id = $key");
+            } else {
+                // Insert new entry
+                $conn->query("INSERT INTO experience_areas (profile_id, name, percentage) 
+                    VALUES (1, '$name', '$percentage')");
+            }
+        }
+    }
+
+    // Handle removed experience areas
+    if (!empty($_POST['removed_experience'])) {
+        $removedIds = json_decode($_POST['removed_experience']);
+        foreach ($removedIds as $id) {
+            $id = (int)$id;
+            $conn->query("DELETE FROM experience_areas WHERE id = $id");
+        }
+    }
+
+    // ==================================
+    // REFERENCES
+    // add and update
+    if (isset($_POST['references'])) {
+        foreach ($_POST['references'] as $key => $ref) {
+            // Determine title value
+            if ($ref['title'] == 'Other') {
+                $title = $conn->real_escape_string($ref['custom_title']);
+            } else {
+                $title = $conn->real_escape_string($ref['title']);
+            }
+
+            $first_name = $conn->real_escape_string($ref['first_name']);
+            $middle_name = $conn->real_escape_string($ref['middle_name']);
+            $last_name = $conn->real_escape_string($ref['last_name']);
+            $position = $conn->real_escape_string($ref['position']);
+            $department = $conn->real_escape_string($ref['department']);
+            $institution = $conn->real_escape_string($ref['institution']);
+            $mobile = $conn->real_escape_string($ref['mobile']);
+            $email = $conn->real_escape_string($ref['email']);
+
+            if (is_numeric($key)) {
+                // Update existing entry
+                $sql = "UPDATE `reference` SET
+                            title='$title',
+                            first_name='$first_name',
+                            middle_name='$middle_name',
+                            last_name='$last_name',
+                            position='$position',
+                            department='$department',
+                            institution='$institution',
+                            mobile='$mobile',
+                            email='$email'
+                        WHERE id = $key";
+                $conn->query($sql);
+            } else {
+                // Insert new entry
+                $sql = "INSERT INTO `reference` (profile_id, title, first_name, middle_name, last_name, position, department, institution, mobile, email)
+                        VALUES (1, '$title', '$first_name', '$middle_name', '$last_name', '$position', '$department', '$institution', '$mobile', '$email')";
+                $conn->query($sql);
+            }
+        }
+    }
+
+    // Handle removed references
+    if (!empty($_POST['removed_references'])) {
+        $removedIds = json_decode($_POST['removed_references']);
+        foreach ($removedIds as $id) {
+            $id = (int)$id;
+            $conn->query("DELETE FROM `reference` WHERE id = $id");
+        }
+    }
+
     echo "Profile updated successfully. <a href='cms.php'>Go back</a>";
 }
 ?>
