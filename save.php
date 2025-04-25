@@ -150,6 +150,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // add and update
     if (isset($_POST['references'])) {
         foreach ($_POST['references'] as $key => $ref) {
+            $first_name = $conn->real_escape_string($ref['first_name']);
+            $middle_name = $conn->real_escape_string($ref['middle_name']);
+            $last_name = $conn->real_escape_string($ref['last_name']);
+
             // Determine title value
             if ($ref['title'] == 'Other') {
                 $title = $conn->real_escape_string($ref['custom_title']);
@@ -157,9 +161,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $title = $conn->real_escape_string($ref['title']);
             }
 
-            $first_name = $conn->real_escape_string($ref['first_name']);
-            $middle_name = $conn->real_escape_string($ref['middle_name']);
-            $last_name = $conn->real_escape_string($ref['last_name']);
             $position = $conn->real_escape_string($ref['position']);
             $department = $conn->real_escape_string($ref['department']);
             $institution = $conn->real_escape_string($ref['institution']);
@@ -169,10 +170,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (is_numeric($key)) {
                 // Update existing entry
                 $sql = "UPDATE `reference` SET
-                            title='$title',
                             first_name='$first_name',
                             middle_name='$middle_name',
                             last_name='$last_name',
+                            title='$title',
                             position='$position',
                             department='$department',
                             institution='$institution',
@@ -182,8 +183,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $conn->query($sql);
             } else {
                 // Insert new entry
-                $sql = "INSERT INTO `reference` (profile_id, title, first_name, middle_name, last_name, position, department, institution, mobile, email)
-                        VALUES (1, '$title', '$first_name', '$middle_name', '$last_name', '$position', '$department', '$institution', '$mobile', '$email')";
+                $sql = "INSERT INTO `reference` (profile_id, first_name, middle_name, last_name, title, position, department, institution, mobile, email)
+                        VALUES (1, '$first_name', '$middle_name', '$last_name', '$title', '$position', '$department', '$institution', '$mobile', '$email')";
                 $conn->query($sql);
             }
         }

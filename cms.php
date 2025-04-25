@@ -115,18 +115,17 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
         $references = $conn->query("SELECT * FROM `reference` WHERE profile_id = 1")->fetch_all(MYSQLI_ASSOC);
         foreach ($references as $ref): ?>
             <div class="reference-entry" id="reference-<?= $ref['id'] ?>" data-id="<?= $ref['id'] ?>">
-            <label>Title: <?= htmlspecialchars($ref['title']) ?> &nbsp;&nbsp;
-            Edit Title:</label>
+                <label>Title:</label>
                 <select name="references[<?= $ref['id'] ?>][title]" onchange="toggleCustomTitle(this, this.nextElementSibling)">
                     <option value="Mr." <?= ($ref['title'] == 'Mr.') ? 'selected' : '' ?>>Mr.</option>
                     <option value="Ms." <?= ($ref['title'] == 'Ms.') ? 'selected' : '' ?>>Ms.</option>
                     <option value="Mrs." <?= ($ref['title'] == 'Mrs.') ? 'selected' : '' ?>>Mrs.</option>
-                    <option value="Other" <?= ($ref['title'] == 'Other') ? 'selected' : '' ?>>Other</option>
+                    <option value="Other" <?= ($ref['title'] != 'Mr.' && $ref['title'] != 'Ms.' && $ref['title'] != 'Mrs.') && ($ref['title'] != '') ? 'selected' : '' ?>>Other</option>
                 </select>
-                <input type="text" name="references[<?= $ref['id'] ?>][custom_title]" 
-                       value="<?= ($ref['title'] != 'Mr.' && $ref['title'] != 'Ms.' && $ref['title'] != 'Mrs.' && $ref['title'] != 'Other') ? htmlspecialchars($ref['title']) : '' ?>"
-                       placeholder="Custom Title"
-                       style="<?= ($ref['title'] == 'Mr.' || $ref['title'] == 'Ms.' || $ref['title'] == 'Mrs.' || $ref['title'] == 'Other') ? 'display:none;' : '' ?>">
+                <input type="text" name="references[<?= $ref['id'] ?>][custom_title]"
+                    value="<?= ($ref['title'] != 'Mr.' && $ref['title'] != 'Ms.' && $ref['title'] != 'Mrs.') ? htmlspecialchars($ref['title']) : '' ?>"
+                    placeholder="Custom Title"
+                    style="display:<?= ($ref['title'] != 'Mr.' && $ref['title'] != 'Ms.' && $ref['title'] != 'Mrs.' && $ref['title'] != 'Other') ? 'inline' : 'none' ?>;">
                 <br>
 
                 <label>First Name:</label>
@@ -152,7 +151,6 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
 
     <button type="button" onclick="addReference()">Add Reference</button>
     <input type="hidden" name="removed_references" id="removed-references">
-
 
     <br><input type="submit" value="Save">
 </form>
@@ -307,7 +305,6 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
         }
     }
 
-    // reference title 
     function toggleCustomTitle(selectElement, customTitleInput) {
         customTitleInput.style.display = (selectElement.value === 'Other') ? 'inline' : 'none';
     }
@@ -317,7 +314,6 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
             toggleCustomTitle(selectElement, selectElement.nextElementSibling);
         });
     });
-
 
 </script>
 
