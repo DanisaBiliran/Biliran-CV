@@ -194,39 +194,50 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         return $image_name;
     }
 
-    // Reorganize $_FILES for easier access
-    $project_image = [];
-    if (isset($_FILES['project_image'])) {
-        foreach ($_FILES['project_image'] as $attr => $values) {
-            foreach ($values as $key => $value) {
-                $project_image[$key][$attr] = $value;
-            }
-        }
-    }
-
     // Handle projects
     if (isset($_POST['projects'])) {
         foreach ($_POST['projects'] as $key => $project) {
             $name = $conn->real_escape_string($project['name']);
             $link = $conn->real_escape_string($project['link']);
+            $status = $conn->real_escape_string($project['status']);
+            $year_completed = ($status == 'completed' && isset($project['year_completed'])) ? intval($project['year_completed']) : null;
+
             $image_name = '';
 
-            // Only try to upload if the file key exists and a file was uploaded
+            // reorganise $_FILES array
+            $project_image = array();
+            if(isset($_FILES['project_image'])){
+            foreach($_FILES['project_image'] as $key_outer => $value_outer) {
+                foreach($value_outer as $key_inner => $value_inner) {
+                    $project_image[$key_inner][$key_outer] = $value_inner;
+                }
+            }
+            }
+        
+            // Handle image upload
             if (isset($project_image[$key]) && !empty($project_image[$key]['name'])) {
                 $image_name = uploadProjectImage($project_image[$key], $project_image_dir);
             }
 
             if (is_numeric($key)) {
-                // Update existing
-                $sql = "UPDATE projects SET name='$name', link='$link'";
+                // Update existing entry
+                $sql = "UPDATE projects SET
+                            name='$name',
+                            link='$link',
+                            status='$status',
+                            year_completed=" . ($year_completed === null ? 'NULL' : $year_completed);
+
                 if (!empty($image_name)) {
                     $sql .= ", image='$image_name'";
                 }
+
                 $sql .= " WHERE id = $key";
                 $conn->query($sql);
+
             } else {
-                // Insert new
-                $sql = "INSERT INTO projects (profile_id, name, link, image) VALUES (1, '$name', '$link', '$image_name')";
+                // Insert new entry
+                $sql = "INSERT INTO projects (profile_id, name, link, image, status, year_completed)
+                        VALUES (1, '$name', '$link', '$image_name', '$status', " . ($year_completed === null ? 'NULL' : $year_completed) . ")";
                 $conn->query($sql);
             }
         }

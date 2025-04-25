@@ -175,8 +175,26 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
     <div id="projects">
         <?php
         $projects = $conn->query("SELECT * FROM projects WHERE profile_id = 1")->fetch_all(MYSQLI_ASSOC);
-        foreach ($projects as $project): ?>
+        $currentYear = date("Y");
+        ?>
+        <?php foreach ($projects as $project): ?>
             <div class="project-entry" id="project-<?= $project['id'] ?>" data-id="<?= $project['id'] ?>">
+
+                <label>Status:</label>
+                <select name="projects[<?= $project['id'] ?>][status]" onchange="toggleYear(this, <?= $project['id'] ?>)">
+                    <option value="completed" <?= ($project['status'] == 'completed') ? 'selected' : '' ?>>Completed</option>
+                    <option value="ongoing" <?= ($project['status'] == 'ongoing') ? 'selected' : '' ?>>Ongoing</option>
+                </select><br>
+
+                <div id="year-completed-<?= $project['id'] ?>" <?= ($project['status'] == 'ongoing') ? 'style="display: none;"' : '' ?>>
+                    <label>Year Completed:</label>
+                    <select name="projects[<?= $project['id'] ?>][year_completed]">
+                        <?php for ($year = $currentYear; $year >= 2000; $year--): ?>
+                            <option value="<?= $year ?>" <?= ($project['year_completed'] == $year) ? 'selected' : '' ?>><?= $year ?></option>
+                        <?php endfor; ?>
+                    </select><br>
+                </div>
+
                 <label>Name:</label>
                 <input type="text" name="projects[<?= $project['id'] ?>][name]" value="<?= htmlspecialchars($project['name']) ?>"><br>
                 <label>Link:</label>
@@ -411,6 +429,7 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
     // PROJECTS
     let projectIndex = <?= count($projects) ?>;
     let newProjectCounter = 0;
+    const currentYear = new Date().getFullYear();
 
     function addProject() {
         const container = document.getElementById("projects");
@@ -418,7 +437,26 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
         const entry = document.createElement("div");
         entry.classList.add("project-entry");
         entry.setAttribute('data-id', newId);
+
+        let yearOptions = '';
+        for (let year = currentYear; year >= 2000; year--) {
+            yearOptions += `<option value="${year}">${year}</option>`;
+        }
+
         entry.innerHTML = `
+            <label>Status:</label>
+            <select name="projects[${newId}][status]" onchange="toggleYear(this, '${newId}')">
+                <option value="completed">Completed</option>
+                <option value="ongoing" selected>Ongoing</option>
+            </select><br>
+
+            <div id="year-completed-${newId}" style="display: none;">
+                <label>Year Completed:</label>
+                <select name="projects[${newId}][year_completed]">
+                    ${yearOptions}
+                </select><br>
+            </div>
+
             <label>Name:</label>
             <input type="text" name="projects[${newId}][name]"><br>
             <label>Link:</label>
@@ -439,6 +477,15 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
             let removedIds = JSON.parse(removed.value || '[]');
             removedIds.push(parseInt(id));
             removed.value = JSON.stringify(removedIds);
+        }
+    }
+
+    function toggleYear(selectElement, projectId) {
+        const yearDiv = document.getElementById(`year-completed-${projectId}`);
+        if (selectElement.value === 'completed') {
+            yearDiv.style.display = 'block';
+        } else {
+            yearDiv.style.display = 'none';
         }
     }
 
