@@ -50,7 +50,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $sql .= " WHERE id = 1";
     $conn->query($sql);
 
-    // Handle achievements
+    // ==================================
+    // ACHIEVEMENTS
+    // add and update
     if (isset($_POST['achievements'])) {
         foreach ($_POST['achievements'] as $key => $ach) {
             $achievement = $conn->real_escape_string($ach['achievement']);
@@ -85,6 +87,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
+    // ==================================
+    // AFFILIATIONS
+    // add and update
+    if (isset($_POST['affiliations'])) {
+        foreach ($_POST['affiliations'] as $key => $aff) {
+            $name = $conn->real_escape_string($aff['name']);
+            
+            if (is_numeric($key)) {
+                // Update existing
+                $conn->query("UPDATE affiliations SET name='$name' WHERE id = $key");
+            } else {
+                // Insert new
+                $conn->query("INSERT INTO affiliations (profile_id, name) VALUES (1, '$name')");
+            }
+        }
+    }
+
+    // Handle removed affiliations
+    if (!empty($_POST['removed_affiliations'])) {
+        $removedIds = json_decode($_POST['removed_affiliations']);
+        foreach ($removedIds as $id) {
+            $id = (int)$id;
+            $conn->query("DELETE FROM affiliations WHERE id = $id");
+        }
+    }
 
     echo "Profile updated successfully. <a href='cms.php'>Go back</a>";
 }

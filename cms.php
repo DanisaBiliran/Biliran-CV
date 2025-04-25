@@ -68,9 +68,24 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
     </div>
     
     <button type="button" onclick="addAchievement()">Add Achievement</button><br><br>
-
-    <!-- Hidden Input for Removed Achievements -->
     <input type="hidden" name="removed_achievements" id="removed-achievements">
+
+    <!-- Affiliations -->
+    <h2>Professional Affiliations</h2>
+    <div id="affiliations">
+        <?php 
+        $affiliations = $conn->query("SELECT * FROM affiliations WHERE profile_id = 1")->fetch_all(MYSQLI_ASSOC);
+        foreach ($affiliations as $aff): ?>
+            <div class="affiliation-entry" id="affiliation-<?= $aff['id'] ?>" data-id="<?= $aff['id'] ?>">
+                <input type="text" name="affiliations[<?= $aff['id'] ?>][name]" 
+                    value="<?= htmlspecialchars($aff['name']) ?>">
+                <button type="button" onclick="removeAffiliation(<?= $aff['id'] ?>)">Remove</button>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <button type="button" onclick="addAffiliation()">Add Affiliation</button>
+    <input type="hidden" name="removed_affiliations" id="removed-affiliations">
 
     <input type="submit" value="Save">
 </form>
@@ -78,6 +93,7 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
 <script>
     let newAchievementCounter = 0;
 
+    // ACHIEVEMENT
     function addAchievement() {
         const container = document.getElementById("achievements");
         const entry = document.createElement("div");
@@ -105,6 +121,36 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
             const removed = JSON.parse(removedField.value || '[]');
             removed.push(parseInt(id));
             removedField.value = JSON.stringify(removed);
+        }
+    }
+
+    // AFFILIATION
+    let affiliationIndex = <?= count($affiliations) ?>;
+    let newAffiliationCounter = 0;
+
+    function addAffiliation() {
+        const container = document.getElementById("affiliations");
+        const entry = document.createElement("div");
+        const newId = 'new_' + newAffiliationCounter++;
+        
+        entry.classList.add("affiliation-entry");
+        entry.setAttribute('data-id', newId);
+        entry.innerHTML = `
+            <input type="text" name="affiliations[${newId}][name]">
+            <button type="button" onclick="removeAffiliation('${newId}')">Remove</button>
+        `;
+        container.appendChild(entry);
+    }
+
+    function removeAffiliation(id) {
+        const entry = document.querySelector(`[data-id="${id}"]`);
+        if (entry) entry.remove();
+
+        if (typeof id === 'number' || !isNaN(id)) {
+            const removed = document.getElementById('removed-affiliations');
+            let removedIds = JSON.parse(removed.value || '[]');
+            removedIds.push(parseInt(id));
+            removed.value = JSON.stringify(removedIds);
         }
     }
 
