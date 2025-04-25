@@ -107,6 +107,92 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
 
     <button type="button" onclick="addExperience()">Add Experience Area</button>
     <input type="hidden" name="removed_experience" id="removed-experience">
+    
+    <!-- Services -->
+    <h2>Services</h2>
+    <div id="services">
+        <?php
+        $services = $conn->query("SELECT * FROM services WHERE profile_id = 1")->fetch_all(MYSQLI_ASSOC);
+        $available_icons = [
+            ["icon" => "fa-solid fa-code", "label" => "Code"],
+            ["icon" => "fa-solid fa-laptop-code", "label" => "Laptop Code"],
+            ["icon" => "fa-solid fa-database", "label" => "Database"],
+            ["icon" => "fa-solid fa-mobile-alt", "label" => "Mobile Dev"],
+            ["icon" => "fa-solid fa-globe", "label" => "Web"],
+            ["icon" => "fa-solid fa-brain", "label" => "AI / ML"],
+            ["icon" => "fa-solid fa-shield-alt", "label" => "Cybersecurity"],
+            ["icon" => "fa-solid fa-chart-line", "label" => "Marketing"],
+            ["icon" => "fa-solid fa-palette", "label" => "Design"],
+            ["icon" => "fa-solid fa-tools", "label" => "Tech Support"],
+            ["icon" => "fa-solid fa-handshake", "label" => "Consulting"],
+            ["icon" => "fa-solid fa-user-gear", "label" => "DevOps"],
+            ["icon" => "fa-solid fa-cogs", "label" => "Engineering"],
+            ["icon" => "fa-solid fa-microchip", "label" => "Hardware"],
+            ["icon" => "fa-solid fa-video", "label" => "Video"],
+            ["icon" => "fa-solid fa-music", "label" => "Music"],
+            ["icon" => "fa-solid fa-pen-nib", "label" => "Content"]
+        ];
+        foreach ($services as $service): ?>
+            <div class="service-entry" id="service-<?= $service['id'] ?>" data-id="<?= $service['id'] ?>">
+                <label>Icon:</label>
+                <select name="services[<?= $service['id'] ?>][icon]" onchange="updateIcon(this, '<?= $service['id'] ?>')">
+                    <?php foreach ($available_icons as $icon): ?>
+                        <option value="<?= $icon['icon'] ?>" <?= ($service['icon'] == $icon['icon']) ? 'selected' : '' ?>>
+                            <?= $icon['label'] ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <i class="<?= htmlspecialchars($service['icon']) ?>"></i> <!-- Display the icon -->
+                <br>
+                <label>Service Name:</label>
+                <input type="text" name="services[<?= $service['id'] ?>][service_name]" value="<?= htmlspecialchars($service['service_name']) ?>"><br>
+                <label>Short Description:</label>
+                <textarea name="services[<?= $service['id'] ?>][short_description]"><?= htmlspecialchars($service['short_description']) ?></textarea><br>
+                <button type="button" onclick="removeService(<?= $service['id'] ?>)">Remove</button>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <button type="button" onclick="addService()">Add Service</button>
+    <input type="hidden" name="removed_services" id="removed-services">
+
+    <script>
+        function updateIcon(selectElement, serviceId) {
+            let iconClass = selectElement.value;
+            let iconElement = selectElement.nextElementSibling; // Get the <i> tag
+
+            // If serviceId is provided, use it to target the specific icon
+            if (serviceId) {
+                iconElement = document.querySelector(`#service-${serviceId} i`);
+            }
+
+            iconElement.className = iconClass; // Update the class
+        }
+    </script>
+
+    <!-- Projects -->
+    <h2>Projects</h2>
+    <div id="projects">
+        <?php
+        $projects = $conn->query("SELECT * FROM projects WHERE profile_id = 1")->fetch_all(MYSQLI_ASSOC);
+        foreach ($projects as $project): ?>
+            <div class="project-entry" id="project-<?= $project['id'] ?>" data-id="<?= $project['id'] ?>">
+                <label>Name:</label>
+                <input type="text" name="projects[<?= $project['id'] ?>][name]" value="<?= htmlspecialchars($project['name']) ?>"><br>
+                <label>Link:</label>
+                <input type="text" name="projects[<?= $project['id'] ?>][link]" value="<?= htmlspecialchars($project['link']) ?>"><br>
+                <label>Image:</label>
+                <input type="file" name="project_image[<?= $project['id'] ?>]">
+                <?php if (!empty($project['image'])): ?>
+                    <br><img src="uploads/project_pics/<?= $project['image'] ?>" width="150"><br>
+                <?php endif; ?>
+                <button type="button" onclick="removeProject(<?= $project['id'] ?>)">Remove</button>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <button type="button" onclick="addProject()">Add Project</button>
+    <input type="hidden" name="removed_projects" id="removed-projects">
 
     <!-- References -->
     <h2>References</h2>
@@ -189,7 +275,7 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
         }
     }
 
-    // AFFILIATION
+    // AFFILIATIONS
     let affiliationIndex = <?= count($affiliations) ?>;
     let newAffiliationCounter = 0;
 
@@ -246,6 +332,110 @@ $achievements = $conn->query("SELECT * FROM achievements WHERE profile_id = 1")-
 
         if (typeof id === 'number' || !isNaN(id)) {
             const removed = document.getElementById('removed-experience');
+            let removedIds = JSON.parse(removed.value || '[]');
+            removedIds.push(parseInt(id));
+            removed.value = JSON.stringify(removedIds);
+        }
+    }
+
+    // SERVICES
+    let serviceIndex = <?= count($services) ?>;
+    let newServiceCounter = 0;
+
+    const availableIcons = [
+        {icon: "fa-solid fa-code", label: "Code"},
+        {icon: "fa-solid fa-laptop-code", label: "Laptop Code"},
+        {icon: "fa-solid fa-database", label: "Database"},
+        {icon: "fa-solid fa-mobile-alt", label: "Mobile Dev"},
+        {icon: "fa-solid fa-globe", label: "Web"},
+        {icon: "fa-solid fa-brain", label: "AI / ML"},
+        {icon: "fa-solid fa-shield-alt", label: "Cybersecurity"},
+        {icon: "fa-solid fa-chart-line", label: "Marketing"},
+        {icon: "fa-solid fa-palette", label: "Design"},
+        {icon: "fa-solid fa-tools", label: "Tech Support"},
+        {icon: "fa-solid fa-handshake", label: "Consulting"},
+        {icon: "fa-solid fa-user-gear", label: "DevOps"},
+        {icon: "fa-solid fa-cogs", label: "Engineering"},
+        {icon: "fa-solid fa-microchip", label: "Hardware"},
+        {icon: "fa-solid fa-video", label: "Video"},
+        {icon: "fa-solid fa-music", label: "Music"},
+        {icon: "fa-solid fa-pen-nib", label: "Content"}
+    ];
+
+    function addService() {
+        const container = document.getElementById("services");
+        const newId = 'new_' + newServiceCounter++;
+        const entry = document.createElement("div");
+        entry.classList.add("service-entry");
+        entry.setAttribute('data-id', newId);
+
+        let iconOptions = '';
+        availableIcons.forEach(icon => {
+            iconOptions += `<option value="${icon.icon}">${icon.label}</option>`;
+        });
+
+        entry.innerHTML = `
+            <label>Icon:</label>
+            <select name="services[${newId}][icon]" onchange="updateIcon(this)">
+                ${iconOptions}
+            </select>
+            <i class="fa-solid fa-code"></i> <!-- Initial icon -->
+            <br>
+            <label>Service Name:</label>
+            <input type="text" name="services[${newId}][service_name]"><br>
+            <label>Short Description:</label>
+            <textarea name="services[${newId}][short_description]"></textarea><br>
+            <button type="button" onclick="removeService('${newId}')">Remove</button>
+        `;
+        container.appendChild(entry);
+    }
+
+    function removeService(id) {
+        const entry = document.querySelector(`[data-id="${id}"]`);
+        if (entry) entry.remove();
+
+        if (typeof id === 'number' || !isNaN(id)) {
+            const removed = document.getElementById('removed-services');
+            let removedIds = JSON.parse(removed.value || '[]');
+            removedIds.push(parseInt(id));
+            removed.value = JSON.stringify(removedIds);
+        }
+    }
+
+    function updateIcon(selectElement) {
+        const iconClass = selectElement.value;
+        const iconElement = selectElement.nextElementSibling; // Get the <i> tag
+        iconElement.className = iconClass; // Update the class
+    }
+
+    // PROJECTS
+    let projectIndex = <?= count($projects) ?>;
+    let newProjectCounter = 0;
+
+    function addProject() {
+        const container = document.getElementById("projects");
+        const newId = 'new_' + newProjectCounter++;
+        const entry = document.createElement("div");
+        entry.classList.add("project-entry");
+        entry.setAttribute('data-id', newId);
+        entry.innerHTML = `
+            <label>Name:</label>
+            <input type="text" name="projects[${newId}][name]"><br>
+            <label>Link:</label>
+            <input type="text" name="projects[${newId}][link]"><br>
+            <label>Image:</label>
+            <input type="file" name="project_image[${newId}]"><br>
+            <button type="button" onclick="removeProject('${newId}')">Remove</button>
+        `;
+        container.appendChild(entry);
+    }
+
+    function removeProject(id) {
+        const entry = document.querySelector(`[data-id="${id}"]`);
+        if (entry) entry.remove();
+
+        if (typeof id === 'number' || !isNaN(id)) {
+            const removed = document.getElementById('removed-projects');
             let removedIds = JSON.parse(removed.value || '[]');
             removedIds.push(parseInt(id));
             removed.value = JSON.stringify(removedIds);

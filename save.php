@@ -116,7 +116,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // ==================================
     // EXPERIENCE AREAS
     // add and update
-    // Handle experience areas
     if (isset($_POST['experience_areas'])) {
         foreach ($_POST['experience_areas'] as $key => $exp) {
             $name = $conn->real_escape_string($exp['name']);
@@ -142,6 +141,114 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         foreach ($removedIds as $id) {
             $id = (int)$id;
             $conn->query("DELETE FROM experience_areas WHERE id = $id");
+        }
+    }
+
+    // ==================================
+    // SERVICES
+    // add and update
+    // Handle services
+    if (isset($_POST['services'])) {
+        foreach ($_POST['services'] as $key => $service) {
+            $icon = $conn->real_escape_string($service['icon']);
+            $service_name = $conn->real_escape_string($service['service_name']);
+            $short_description = $conn->real_escape_string($service['short_description']);
+
+            if (is_numeric($key)) {
+                // Update existing entry
+                $sql = "UPDATE services SET
+                            icon='$icon',
+                            service_name='$service_name',
+                            short_description='$short_description'
+                        WHERE id = $key";
+                $conn->query($sql);
+            } else {
+                // Insert new entry
+                $sql = "INSERT INTO services (profile_id, icon, service_name, short_description)
+                        VALUES (1, '$icon', '$service_name', '$short_description')";
+                $conn->query($sql);
+            }
+        }
+    }
+
+    // Handle removed services
+    if (!empty($_POST['removed_services'])) {
+        $removedIds = json_decode($_POST['removed_services']);
+        foreach ($removedIds as $id) {
+            $id = (int)$id;
+            $conn->query("DELETE FROM services WHERE id = $id");
+        }
+    }
+
+    // ==================================
+    // PROJECTS
+    // add and update
+    // Directory for project images
+    $project_image_dir = "uploads/project_pics/";
+
+    // Function to handle image uploads
+    function uploadProjectImage($file, $project_image_dir) {
+        $image_name = basename($file["name"]);
+        $target_file = $project_image_dir . $image_name;
+        move_uploaded_file($file["tmp_name"], $target_file);
+        return $image_name;
+    }
+
+    // Reorganize $_FILES for easier access
+    $project_image = [];
+    if (isset($_FILES['project_image'])) {
+        foreach ($_FILES['project_image'] as $attr => $values) {
+            foreach ($values as $key => $value) {
+                $project_image[$key][$attr] = $value;
+            }
+        }
+    }
+
+    // Handle projects
+    if (isset($_POST['projects'])) {
+        foreach ($_POST['projects'] as $key => $project) {
+            $name = $conn->real_escape_string($project['name']);
+            $link = $conn->real_escape_string($project['link']);
+            $image_name = '';
+
+            // Only try to upload if the file key exists and a file was uploaded
+            if (isset($project_image[$key]) && !empty($project_image[$key]['name'])) {
+                $image_name = uploadProjectImage($project_image[$key], $project_image_dir);
+            }
+
+            if (is_numeric($key)) {
+                // Update existing
+                $sql = "UPDATE projects SET name='$name', link='$link'";
+                if (!empty($image_name)) {
+                    $sql .= ", image='$image_name'";
+                }
+                $sql .= " WHERE id = $key";
+                $conn->query($sql);
+            } else {
+                // Insert new
+                $sql = "INSERT INTO projects (profile_id, name, link, image) VALUES (1, '$name', '$link', '$image_name')";
+                $conn->query($sql);
+            }
+        }
+    }
+
+    // Handle removed projects
+    if (!empty($_POST['removed_projects'])) {
+        $removedIds = json_decode($_POST['removed_projects']);
+        foreach ($removedIds as $id) {
+            $id = (int)$id;
+
+            // Fetch image name to delete from directory
+            $result = $conn->query("SELECT image FROM projects WHERE id = $id");
+            $project = $result->fetch_assoc();
+            if ($project && !empty($project['image'])) {
+                $image_path = $project_image_dir . $project['image'];
+                if (file_exists($image_path)) {
+                    unlink($image_path); // Delete the file
+                }
+            }
+
+            $conn->query("DELETE FROM projects WHERE id = $id");
         }
     }
 
